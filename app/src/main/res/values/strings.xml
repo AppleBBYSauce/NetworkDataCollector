@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NetworkDataCollector</string>
+    <string name="device_information">Device Information</string>
+</resources>

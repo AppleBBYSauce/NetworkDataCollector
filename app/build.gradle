@@ -1,0 +1,87 @@
+
+
+buildscript {
+    repositories {
+        maven {
+            allowInsecureProtocol = true
+            url 'http://maven.aliyun.com/nexus/content/groups/public/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url 'https://maven.aliyun.com/repository/public/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url 'https://maven.aliyun.com/repository/google/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url 'https://maven.aliyun.com/repository/jcenter/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url 'https://maven.aliyun.com/repository/central/'
+        }
+
+    }
+
+}
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.ndc'
+    compileSdk 33
+
+
+    sourceSets {
+        main{
+            jniLibs.srcDir 'libs'
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.example.ndc"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.6.0'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation fileTree(dir: 'libs', include:['*jar'])
+
+    // Baidu Map
+    implementation files('libs/BaiduLBS_Android.jar')
+
+    // Pytorch
+    implementation 'org.pytorch:pytorch_android_lite:1.10.0'
+//    implementation 'org.pytorch:pytorch_android_torchvision:1.10.0'
+
+}
