@@ -45,10 +45,10 @@ public class CommunicationUtils {
             Log.e("CommUtils", "bind port fail!");
             e.printStackTrace();
         }
-        try{
+        try {
             ReceiveSocket = DatagramChannel.open();
             ReceiveSocket.socket().bind(new InetSocketAddress(9000));
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.e("CommUtils", "bind port fail!");
             e.printStackTrace();
         }
@@ -103,7 +103,7 @@ public class CommunicationUtils {
         return 1;
     }
 
-    Integer OverTimer(Thread t){
+    Integer OverTimer(Thread t) {
         t.start();
         try {
             t.join(1000);
@@ -154,11 +154,11 @@ public class CommunicationUtils {
     }
 
     //  broadcast message to search available devices
-    void BroadCast(String message){
+    void BroadCast(String message) {
         BroadServer = new Thread(new Runnable() {
             @Override
             public void run() {
-                while(true){
+                while (true) {
                     try {
                         Log.e("BroadCast", "start BroadCast");
                         DatagramSocket socket = new DatagramSocket();
@@ -170,14 +170,14 @@ public class CommunicationUtils {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    sleep(1000*5);
+                    sleep(1000 * 5);
                 }
             }
         });
         BroadServer.start();
     }
 
-    void BroadCast_(){
+    void BroadCast_() {
         try {
             DatagramSocket socket = new DatagramSocket();
             byte[] meg = "B\n".getBytes();
@@ -190,10 +190,10 @@ public class CommunicationUtils {
         }
     }
 
-    void GroupBroadCast(ArrayList<String> Address, String Message){
+    void GroupBroadCast(ArrayList<String> Address, String Message) {
         byte[] data = Message.getBytes();
-        for(String IP:Address){
-            Thread t = new Thread(new Runnable(){
+        for (String IP : Address) {
+            Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {

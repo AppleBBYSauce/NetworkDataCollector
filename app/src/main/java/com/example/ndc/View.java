@@ -29,7 +29,7 @@ public class View {
     private CommunicationUtils commUtils = null;
     private Map<String, FuncPoint> funMap = null;
     public Map<String, Integer> IPMap = null;
-    private DeviceInfo Informer = null;
+    public DeviceInfo Informer = null;
     private String SYN = null;
     private HashMap<String, String> SynInfo = null;
     public Thread GroupServer = null;
@@ -39,6 +39,7 @@ public class View {
     public static String Activity_Device = null;
     public static HashMap<String, Queue<ArrayList<Float>>> OnlineBuffer = null;
     public static int MAX_LEN = 12;
+    public int SR = 0;
     public static String UnKnown = "-1\t-1\t-1\t-1\t1\t-1\t-1\t-1";
     public static String[] miss = new String[]{"-1", "-1", "-1"};
 
@@ -55,6 +56,7 @@ public class View {
         Device_Manifests = "";
         Activity_Device = "";
         OnlineBuffer = new HashMap<>();
+        SR = Informer.getNetStatus(Utils.context);
 
         funMap = new HashMap<>();
         funMap.put("T", this::SendMySelf); // send self-network information
@@ -210,50 +212,20 @@ public class View {
         }
 
         SB.append("\n");
-        toFile(SB.toString());
+        Calendar now = Calendar.getInstance();
+        String date = now.get(Calendar.YEAR) + "-" + now.get(Calendar.MONTH) + "-" + now.get(Calendar.DAY_OF_MONTH);
+        toFile(SB.toString(), date);
         Activity_Device = SB.toString();
         SynInfo.clear();
     }
 
-    public void toFile(String data) throws IOException {
+    public void toFile(String data, String file_name) throws IOException {
         FileOutputStream out = null;
         BufferedWriter writer = null;
-        Calendar now = Calendar.getInstance();
-        String date = now.get(Calendar.YEAR) + "-" + now.get(Calendar.MONTH) + "-" + now.get(Calendar.DAY_OF_MONTH);
-        out = Utils.context.openFileOutput(date, Context.MODE_APPEND);
+        out = Utils.context.openFileOutput(file_name, Context.MODE_APPEND);
         writer = new BufferedWriter(new OutputStreamWriter(out));
         writer.write(data);
         writer.close();
-    }
-
-    public void OfflineCollector() {
-
-        while (true) {
-            LocalIP = Informer.getIP(Utils.context);
-            Device_Manifests = "";
-            for (String IP : IPMap.keySet()) {
-                Device_Manifests += IP + "\n";
-            }
-            sleep(1000 * 2 + 500);
-            Log.e("OfflineCollector", "start to Broadcast");
-            SYN = String.valueOf(System.currentTimeMillis());
-            HashMap<String, Integer> cloneIPMap = new HashMap<>(IPMap);
-            Iterator<String> Keys = cloneIPMap.keySet().iterator();
-            ArrayList<String> IPs = new ArrayList<>();
-            while (Keys.hasNext()) {
-                String IP = Keys.next();
-                if (cloneIPMap.get(IP) <= 10 * MaxEndurance) IPs.add(IP);
-                else if (cloneIPMap.get(IP) > 10 * MaxEndurance) IPMap.remove(IP);
-            }
-            Utils.getCommUtils().GroupBroadCast(IPs, "T" + '\n' + SYN);
-            sleep(1000 * 2 + 500);
-            Log.e("OfflineCollector", "start to recycle");
-            try {
-                Recycle();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void OfflineCollector_() {
@@ -307,6 +279,33 @@ public class View {
         sleep(3000);
         Log.e("OfflineCollector", "start to recycle");
         RecycleOnline();
+    }
+    public void StatusRecorder(){
+        int new_SR = Informer.getNetStatus(Utils.context);
+        Log.e("SR", SR + "\t" + new_SR);
+
+        if (new_SR != SR){
+            Log.e("SR", "start to write!");
+            StringBuilder context_info = new StringBuilder();
+            String[] loc = Utils.getCommUtils().Location.toString().split("\t");
+            Calendar now = Calendar.getInstance();
+
+            context_info.append(now.get(Calendar.DAY_OF_MONTH)).append("\t");
+            context_info.append(now.get(Calendar.DAY_OF_WEEK)).append("\t");
+            context_info.append(now.get(Calendar.HOUR_OF_DAY)).append("\t");
+            context_info.append(now.get(Calendar.MINUTE)).append("\t");
+            context_info.append(loc[0]).append("\t");
+            context_info.append(loc[1]).append("\n");
+
+            try {
+                Log.e("SR", "write successfully!");
+                toFile(context_info.toString(), "status_record");
+            } catch (IOException e) {
+                Log.e("SR", "fail to write!");
+                e.printStackTrace();
+            }
+            SR = new_SR;
+        }
     }
 
 

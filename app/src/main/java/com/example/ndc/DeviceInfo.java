@@ -269,44 +269,28 @@ public class DeviceInfo {
         return stringBuffer.toString();
     }
 
-    public String getNetStatus(Context context) {
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return "-1";
+    public int getNetStatus(Context context) {
+        ConnectivityManager cm = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            return 0;//无连接
         }
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo == null || !networkInfo.isAvailable()) {
+            return 0;//无连接
+        }
+        int type = networkInfo.getType();
+        if (type == ConnectivityManager.TYPE_WIFI) {
+            return 1;
+        } else if (type == ConnectivityManager.TYPE_MOBILE) {
+            return 2; // 移动网络
+        }
+        return 0;
 
-        switch (telephonyManager.getNetworkType()) {
-            case TelephonyManager.NETWORK_TYPE_1xRTT:
-            case TelephonyManager.NETWORK_TYPE_EDGE:
-            case TelephonyManager.NETWORK_TYPE_CDMA:
-            case TelephonyManager.NETWORK_TYPE_IDEN:
-            case TelephonyManager.NETWORK_TYPE_GPRS:
-                return "2";
-            case TelephonyManager.NETWORK_TYPE_EHRPD:
-            case TelephonyManager.NETWORK_TYPE_UMTS:
-            case TelephonyManager.NETWORK_TYPE_EVDO_0:
-            case TelephonyManager.NETWORK_TYPE_EVDO_A:
-            case TelephonyManager.NETWORK_TYPE_EVDO_B:
-            case TelephonyManager.NETWORK_TYPE_HSDPA:
-            case TelephonyManager.NETWORK_TYPE_HSPA:
-            case TelephonyManager.NETWORK_TYPE_HSPAP:
-            case TelephonyManager.NETWORK_TYPE_HSUPA:
-                return "3";
-            case TelephonyManager.NETWORK_TYPE_LTE:
-                return "4";
-            case TelephonyManager.NETWORK_TYPE_NR:
-                return "5";
-            default:
-                return "-1";
-        }
     }
+
+
+
 
 
 }

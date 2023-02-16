@@ -86,10 +86,18 @@ public class OfflineCollector extends IntentService {
                 Utils.getCommUtils().view.OfflineCollector_();
             }
         };
+        Runnable status_recorder = new Runnable() {
+            @Override
+            public void run() {
+                Utils.getCommUtils().view.StatusRecorder();
+            }
+        };
+
 
 
         service.scheduleAtFixedRate(broadcast, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
         service.scheduleAtFixedRate(offline_collector, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
+        service.scheduleAtFixedRate(status_recorder, 1, 10, TimeUnit.SECONDS);
         LE.mLocationClient.start();
         Utils.getCommUtils().RunUDPServer();
 
