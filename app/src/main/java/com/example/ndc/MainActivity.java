@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.IOException;
+import java.util.Objects;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -84,13 +85,18 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                     break;
                 case R.id.Sc:
-                    Utils.getCommUtils().period =  Integer.valueOf(ETPeriod.getText().toString());
+                    String period = ETPeriod.getText().toString();
+                    if (Objects.equals("", period)) period = "60";
+                    Utils.getCommUtils().period =  Integer.valueOf(period);
                     intent = new Intent(MainActivity.this, OfflineCollector.class);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         startForegroundService(intent);
                     } else {
                         startService(intent);
+
                     }
+
+
                     break;
                 case R.id.forecast:
                     intent = new Intent(MainActivity.this, NetworkForecast.class);

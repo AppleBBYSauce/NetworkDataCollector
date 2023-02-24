@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -42,6 +43,9 @@ public class View {
     public int SR = 0;
     public static String UnKnown = "-1\t-1\t-1\t-1\t1\t-1\t-1\t-1";
     public static String[] miss = new String[]{"-1", "-1", "-1"};
+
+    public static int patience = 1;
+    public static int counter = 0;
 
     public interface FuncPoint {
         void run(String[] data, String IP) throws UnknownHostException;
@@ -112,10 +116,10 @@ public class View {
         OnlineData.add((float) OnlineBuffer.size() / 10);
 
         // Location Data
-        OnlineData.add(Objects.equals("-1", receiver[4]) ?(float) -1:(float) (Float.parseFloat(receiver[4]) / 180.0));
-        OnlineData.add(Objects.equals("-1", sender[4]) ?(float) -1:(float) (Float.parseFloat(sender[4]) / 180.0));
-        OnlineData.add(Objects.equals("-1", receiver[5]) ?(float) -1:(float) (Float.parseFloat(receiver[5]) / 90.0));
-        OnlineData.add(Objects.equals("-1", sender[5]) ?(float) -1:(float) (Float.parseFloat(sender[5]) / 90.0));
+        OnlineData.add(Objects.equals("-1", receiver[4]) ? (float) -1 : (float) (Float.parseFloat(receiver[4]) / 180.0));
+        OnlineData.add(Objects.equals("-1", sender[4]) ? (float) -1 : (float) (Float.parseFloat(sender[4]) / 180.0));
+        OnlineData.add(Objects.equals("-1", receiver[5]) ? (float) -1 : (float) (Float.parseFloat(receiver[5]) / 90.0));
+        OnlineData.add(Objects.equals("-1", sender[5]) ? (float) -1 : (float) (Float.parseFloat(sender[5]) / 90.0));
 
 
         // Convert DateTime
@@ -280,32 +284,56 @@ public class View {
         Log.e("OfflineCollector", "start to recycle");
         RecycleOnline();
     }
-    public void StatusRecorder(){
+
+    public int ActivateJudge() {
         int new_SR = Informer.getNetStatus(Utils.context);
-        Log.e("SR", SR + "\t" + new_SR);
 
-        if (new_SR != SR){
-            Log.e("SR", "start to write!");
-            StringBuilder context_info = new StringBuilder();
-            String[] loc = Utils.getCommUtils().Location.toString().split("\t");
-            Calendar now = Calendar.getInstance();
-
-            context_info.append(now.get(Calendar.DAY_OF_MONTH)).append("\t");
-            context_info.append(now.get(Calendar.DAY_OF_WEEK)).append("\t");
-            context_info.append(now.get(Calendar.HOUR_OF_DAY)).append("\t");
-            context_info.append(now.get(Calendar.MINUTE)).append("\t");
-            context_info.append(loc[0]).append("\t");
-            context_info.append(loc[1]).append("\n");
-
-            try {
-                Log.e("SR", "write successfully!");
-                toFile(context_info.toString(), "status_record");
-            } catch (IOException e) {
-                Log.e("SR", "fail to write!");
-                e.printStackTrace();
+        if (new_SR != SR) return 1;
+        Log.e("SR", "Cell Signal Strength:\t" + Informer.listenGsmSignalStrength() + "\t" +
+                "WIFI signal Strength\t" + Informer.getWifiRssi() + "\t" +
+                "Connection type:\t" + (new_SR==1?"WIFI":"CELL"));
+        if (new_SR == 2) {
+            Log.e("SR", "Signal Level:\t" + Informer.listenGsmSignalStrength());
+            if (Informer.listenGsmSignalStrength() <= -95) {
+                counter += 1;
+                if (counter >= patience) return 2;
             }
-            SR = new_SR;
+            else counter = 0;
         }
+
+        if (new_SR == 1 )
+        {
+
+            if(Informer.getWifiRssi() <=-95){
+                counter += 1;
+                if (counter >= patience) return 2;
+            }
+            else counter = 0;
+
+        }
+
+        return 0;
+    }
+
+    public void StatusRecorder() {
+        int new_SR = Informer.getNetStatus(Utils.context);
+        int aj = ActivateJudge();
+        StringBuilder context_info = new StringBuilder();
+        String[] loc = Utils.getCommUtils().Location.toString().split("\t");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        context_info.append(sdf.format(new Date())).append("\t");
+        context_info.append(loc[0]).append("\t");
+        context_info.append(loc[1]).append("\t");
+        context_info.append(aj).append("\n");
+
+        try {
+            Log.e("SR", "write successfully!");
+            toFile(context_info.toString(), "status_record");
+        } catch (IOException e) {
+            Log.e("SR", "fail to write!");
+            e.printStackTrace();
+        }
+        SR = new_SR;
     }
 
 

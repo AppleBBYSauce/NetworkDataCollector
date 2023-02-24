@@ -1,5 +1,7 @@
 package com.example.ndc;
 
+import static android.os.SystemClock.sleep;
+
 import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.Notification;
@@ -11,6 +13,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.PowerManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
@@ -94,14 +97,17 @@ public class OfflineCollector extends IntentService {
         };
 
 
+        if (Utils.getCommUtils().period <= 20){
+            service.scheduleAtFixedRate(broadcast, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
+            service.scheduleAtFixedRate(offline_collector, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
+        }
 
-        service.scheduleAtFixedRate(broadcast, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
-        service.scheduleAtFixedRate(offline_collector, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
-        service.scheduleAtFixedRate(status_recorder, 1, 10, TimeUnit.SECONDS);
+        service.scheduleAtFixedRate(status_recorder, 1, Utils.getCommUtils().period, TimeUnit.SECONDS);
         LE.mLocationClient.start();
         Utils.getCommUtils().RunUDPServer();
-
+        while(true) {sleep(9999999);}
 
     }
+
 
 }

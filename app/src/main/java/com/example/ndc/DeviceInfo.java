@@ -4,6 +4,7 @@ import static android.content.Context.TELEPHONY_SERVICE;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -11,6 +12,17 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoNr;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthCdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthNr;
+import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -23,11 +35,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Objects;
 
 public class DeviceInfo {
 
     private static ActivityManager mActivityManager;
+    public static int GsmSignalStrength = -1;
     public static String UnKnown = "-1\t-1\t-1\t-1";
 
     public String PatternInfoCompile(Context context) {
@@ -58,6 +72,61 @@ public class DeviceInfo {
             Location = UnKnown;
         }
         return getNetworkInfo(context) + '\t' + Location;
+    }
+
+    public int listenGsmSignalStrength() {
+        TelephonyManager telephonyManager = (TelephonyManager) Utils.context.getSystemService(TELEPHONY_SERVICE);
+        List<CellInfo> cellInfoList;
+        if (ActivityCompat.checkSelfPermission(Utils.context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            return -108;
+        }
+        cellInfoList = telephonyManager.getAllCellInfo();
+        for (CellInfo cellInfo : cellInfoList) {
+            if (cellInfo instanceof CellInfoGsm) {
+                CellSignalStrengthGsm cellSignalStrengthGsm =
+
+                        ((CellInfoGsm) cellInfo).getCellSignalStrength();
+
+                return cellSignalStrengthGsm.getDbm();
+
+            } else if (cellInfo instanceof CellInfoCdma) {
+
+                CellSignalStrengthCdma cellSignalStrengthCdma =
+
+                        ((CellInfoCdma) cellInfo).getCellSignalStrength();
+
+                return cellSignalStrengthCdma.getLevel();
+
+            } else if (cellInfo instanceof CellInfoWcdma) {
+
+                CellSignalStrengthWcdma cellSignalStrengthWcdma =
+
+                        ((CellInfoWcdma) cellInfo).getCellSignalStrength();
+
+                return cellSignalStrengthWcdma.getDbm();
+            }
+
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cellInfo instanceof CellInfoNr) { // 5G
+                    if (cellInfo.isRegistered()){
+                        CellSignalStrengthNr cellSignalStrengthNr = null;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            cellSignalStrengthNr = (CellSignalStrengthNr) cellInfo.getCellSignalStrength();
+                            return cellSignalStrengthNr.getDbm();
+                        }
+                }
+                }
+
+            else if (cellInfo instanceof CellInfoLte) {
+
+                CellSignalStrengthLte cellSignalStrengthLte = ((CellInfoLte) cellInfo).getCellSignalStrength();
+
+                return cellSignalStrengthLte.getDbm();
+            }
+            }
+
+        return -108;
     }
 
     public static String intIP2StringIP(int ip) {
@@ -203,6 +272,12 @@ public class DeviceInfo {
         return netOperator;
     }
 
+    public int getWifiRssi() {
+        WifiManager wifiManager = (WifiManager) Utils.context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        return wifiInfo.getRssi();
+    }
+
     public String getWifiInfo(Context context) {
         WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
@@ -232,10 +307,11 @@ public class DeviceInfo {
         if (type == ConnectivityManager.TYPE_WIFI) {
             return getWifiInfo(context);
         } else if (type == ConnectivityManager.TYPE_MOBILE) {
-            return UnKnown; // 移动网络
+            return listenGsmSignalStrength() + ""; // 移动网络
         }
         return UnKnown;
     }
+
 
     public static String runShellCommand(String command) {
         Runtime runtime;
@@ -288,9 +364,6 @@ public class DeviceInfo {
         return 0;
 
     }
-
-
-
 
 
 }
