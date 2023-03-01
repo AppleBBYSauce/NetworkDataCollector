@@ -1,20 +1,16 @@
 package com.example.ndc;
 
-import android.content.Context;
-import android.util.Log;
 
-import com.baidu.location.BDLocationListener;
+import android.app.Notification;
+import android.content.Context;
+
+
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
-import com.baidu.mapapi.CoordType;
-import com.baidu.mapapi.SDKInitializer;
-
-import java.util.Objects;
 
 public class Locationer {
-    public LocationClient mLocationClient = null;
-    public LocationUtils mListener = null;
-
+    public  LocationClient mLocationClient = null;
+    public  LocationUtils mListener = null;
 
     public void initLocation(Context context) throws Exception {
 
@@ -23,15 +19,17 @@ public class Locationer {
         mListener = new LocationUtils();
 
         LocationClientOption option = new LocationClientOption();
-        option.setScanSpan(10000);
-        option.setCoorType("BD09ll");
+
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+        option.setOnceLocation(true);
+        option.setCoorType("bd09ll");
+        option.setNeedDeviceDirect(true);
         option.setOpenGnss(true);
-        option.setIsEnableBeidouMode(true);
+//        option.setIsEnableBeidouMode(true);
+//        option.setOpenAutoNotifyMode();
+//        option.setOpenAutoNotifyMode(3000,1, LocationClientOption.LOC_SENSITIVITY_HIGHT);
 
         mLocationClient.registerLocationListener(mListener);
         mLocationClient.setLocOption(option);
-    }
-    public void stopListener(){
-        mLocationClient.stop();
     }
 }

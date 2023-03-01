@@ -71,7 +71,8 @@ public class OnlineCollector extends IntentService {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.ON_AFTER_RELEASE|PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
         wakeLock.acquire();
-        startForeground(18741872, getNotification("OfflineCollector", "OfflineCollector", "OfflineCollector"));
+        Notification notify = getNotification("OfflineCollector", "OfflineCollector", "OfflineCollector");
+        startForeground(18741872, notify);
 
         service.scheduleAtFixedRate(broadcast, 1, 5, TimeUnit.SECONDS);
         service.scheduleAtFixedRate(online_collector, 1, 5, TimeUnit.SECONDS);
@@ -83,7 +84,6 @@ public class OnlineCollector extends IntentService {
             Log.e("Location", "start Location fail");
             e.printStackTrace();
         }
-        LE.mLocationClient.start();
 
         Utils.getCommUtils().RunUDPServer();
         Log.e("Pytorch", "start all server");

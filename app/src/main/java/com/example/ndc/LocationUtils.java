@@ -15,11 +15,11 @@ public class LocationUtils extends BDAbstractLocationListener {
     @Override
     public void onReceiveLocation(BDLocation bdLocation) {
         Log.e("Location", "Call");
-        StringBuilder Location = new StringBuilder();
-        Location.append(bdLocation.getLongitude()).append('\t');
-        Location.append(bdLocation.getLatitude()).append('\t');
-        Location.append(bdLocation.getLocType()).append('\t');
-        Location.append(bdLocation.getSpeed());
-        Utils.getCommUtils().Location = Location;
+        Utils.getCommUtils().Location.delete(0, Utils.getCommUtils().Location.length());
+        Utils.getCommUtils().Location.append(bdLocation.getLongitude()).append('\t');
+        Utils.getCommUtils().Location.append(bdLocation.getLatitude()).append('\t');
+//        Utils.getCommUtils().Location.append(bdLocation.getDirection()).append('\t');
+//        Utils.getCommUtils().Location.append(bdLocation.getLocType()).append('\t');
+//        Location.append(bdLocation.getSpeed());
     }
 }

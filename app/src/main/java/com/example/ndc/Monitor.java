@@ -18,7 +18,12 @@ public class Monitor extends AppCompatActivity {
         setContentView(R.layout.activity_monitor);
         TextView monitor = findViewById(R.id.deviceInfo);
         DeviceInfo info = new DeviceInfo();
-        monitor.setText(info.PatternInfoCompile(this) +"\n" +View.Device_Manifests + "\n" + View.Activity_Device);
+        monitor.setText(info.PatternInfoCompile(this) +"\n"  +
+                View.Device_Manifests + "\n" +
+                View.Activity_Device + "\n" +
+                View.LocalIP + "\n" +
+                Utils.getCommUtils().Location
+        );
     }
 }
 

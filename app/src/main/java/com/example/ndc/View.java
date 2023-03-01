@@ -34,7 +34,7 @@ public class View {
     private String SYN = null;
     private HashMap<String, String> SynInfo = null;
     public Thread GroupServer = null;
-    public String LocalIP = null;
+    public static String LocalIP = null;
     private final Integer MaxEndurance = 6;
     public static String Device_Manifests = null;
     public static String Activity_Device = null;
@@ -46,6 +46,8 @@ public class View {
 
     public static int patience = 1;
     public static int counter = 0;
+
+    public Locationer locationer = null;
 
     public interface FuncPoint {
         void run(String[] data, String IP) throws UnknownHostException;
@@ -61,6 +63,7 @@ public class View {
         Activity_Device = "";
         OnlineBuffer = new HashMap<>();
         SR = Informer.getNetStatus(Utils.context);
+
 
         funMap = new HashMap<>();
         funMap.put("T", this::SendMySelf); // send self-network information
@@ -318,12 +321,27 @@ public class View {
     public void StatusRecorder() {
         int new_SR = Informer.getNetStatus(Utils.context);
         int aj = ActivateJudge();
+        locationer = new Locationer();
+
+        try {
+            locationer.initLocation(Utils.context);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        locationer.mLocationClient.start();
         StringBuilder context_info = new StringBuilder();
         String[] loc = Utils.getCommUtils().Location.toString().split("\t");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         context_info.append(sdf.format(new Date())).append("\t");
-        context_info.append(loc[0]).append("\t");
-        context_info.append(loc[1]).append("\t");
+        try {
+            context_info.append(loc[0]).append("\t");
+            context_info.append(loc[1]).append("\t");
+        }catch (Exception e){
+            context_info.append(-1).append("\t");
+            context_info.append(-1).append("\t");
+
+        }
         context_info.append(aj).append("\n");
 
         try {
