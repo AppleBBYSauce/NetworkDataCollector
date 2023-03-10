@@ -72,6 +72,15 @@ public class View {
         funMap.put("O1", this::SaveBufferOnline);
         funMap.put("B", this::ReportSelf); // explore device through broadcast
         funMap.put("B1", this::SaveIP); // save device's IP
+        locationer = new Locationer();
+
+        try {
+            locationer.initLocation(Utils.context);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        locationer.mLocationClient.start();
+
     }
 
     private void SaveBufferOnline(String[] data, String IP) {
@@ -288,46 +297,28 @@ public class View {
         RecycleOnline();
     }
 
-    public int ActivateJudge() {
-        int new_SR = Informer.getNetStatus(Utils.context);
-
-        if (new_SR != SR) return 1;
+    public int[] ActivateJudge() {
+        int network_type = Informer.getNetStatus(Utils.context);
+        int strength_strengthen = 0;
         Log.e("SR", "Cell Signal Strength:\t" + Informer.listenGsmSignalStrength() + "\t" +
                 "WIFI signal Strength\t" + Informer.getWifiRssi() + "\t" +
-                "Connection type:\t" + (new_SR==1?"WIFI":"CELL"));
-        if (new_SR == 2) {
+                "Connection type:\t" + (network_type == 1 ? "WIFI" : "CELL"));
+        if (network_type == 2) {
             Log.e("SR", "Signal Level:\t" + Informer.listenGsmSignalStrength());
-            if (Informer.listenGsmSignalStrength() <= -95) {
-                counter += 1;
-                if (counter >= patience) return 2;
-            }
-            else counter = 0;
-        }
-
-        if (new_SR == 1 )
-        {
-
-            if(Informer.getWifiRssi() <=-95){
-                counter += 1;
-                if (counter >= patience) return 2;
-            }
-            else counter = 0;
+            if (Informer.listenGsmSignalStrength() > -95) strength_strengthen = 1;
 
         }
 
-        return 0;
+        if (network_type == 1) {
+            if (Informer.getWifiRssi() > -95) strength_strengthen = 1;
+        }
+
+        return new int[] {network_type ,strength_strengthen};
     }
 
     public void StatusRecorder() {
         int new_SR = Informer.getNetStatus(Utils.context);
-        int aj = ActivateJudge();
-        locationer = new Locationer();
-
-        try {
-            locationer.initLocation(Utils.context);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        int[] aj = ActivateJudge();
 
         locationer.mLocationClient.start();
         StringBuilder context_info = new StringBuilder();
@@ -337,12 +328,11 @@ public class View {
         try {
             context_info.append(loc[0]).append("\t");
             context_info.append(loc[1]).append("\t");
-        }catch (Exception e){
+        } catch (Exception e) {
             context_info.append(-1).append("\t");
             context_info.append(-1).append("\t");
-
         }
-        context_info.append(aj).append("\n");
+        context_info.append(aj[0]).append(aj[1]).append("\n");
 
         try {
             Log.e("SR", "write successfully!");

@@ -25,9 +25,6 @@ public class Locationer {
         option.setCoorType("bd09ll");
         option.setNeedDeviceDirect(true);
         option.setOpenGnss(true);
-//        option.setIsEnableBeidouMode(true);
-//        option.setOpenAutoNotifyMode();
-//        option.setOpenAutoNotifyMode(3000,1, LocationClientOption.LOC_SENSITIVITY_HIGHT);
 
         mLocationClient.registerLocationListener(mListener);
         mLocationClient.setLocOption(option);

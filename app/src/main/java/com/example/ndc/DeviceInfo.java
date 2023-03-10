@@ -357,7 +357,7 @@ public class DeviceInfo {
         }
         int type = networkInfo.getType();
         if (type == ConnectivityManager.TYPE_WIFI) {
-            return 1;
+            return 1; // WIFI
         } else if (type == ConnectivityManager.TYPE_MOBILE) {
             return 2; // 移动网络
         }

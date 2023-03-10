@@ -14,9 +14,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+
+import com.google.common.geometry.S2LatLng;
+
 import java.io.IOException;
 import java.util.Objects;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private Button mBtnForecast;
     private EditText ETPeriod;
 
-
     // permission manifest
     String[] permission = new String[]{
             Manifest.permission.READ_PHONE_STATE,
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
     };
+
 
 
     // apply permission
