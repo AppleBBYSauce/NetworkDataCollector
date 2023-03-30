@@ -29,7 +29,7 @@ public class Coordinate {
         return 4.9E-324 != lon && 4.9E-324 != lat && lon != -1 && lat != -1;
     }
 
-    public static final HashMap<Integer, double[]> Length2CellSize = new HashMap<>() {
+    public static final HashMap Length2CellSize = new HashMap() {
         {
             put(7, new double[]{152.9, 152.4});
             put(8, new double[]{38.2, 19});
@@ -55,6 +55,7 @@ public class Coordinate {
     | 9              | 4.8m   | 4.8m   |
     +---------------+--------+---------+
      */
+
     public static String encode(double latitude, double longitude, int precision) {
         double[] latRange = new double[]{-90.0, 90.0};
         double[] lonRange = new double[]{-180.0, 180.0};
@@ -99,12 +100,12 @@ public class Coordinate {
         return geoHash.toString();
     }
 
-    public static double[] decode(String geoHash) {
+    public static double[] decode(String geoHash, Integer precision) {
         double[] latRange = new double[]{-90.0, 90.0};
         double[] lonRange = new double[]{-180.0, 180.0};
         boolean isEven = true;
 
-        for (int i = 0; i < geoHash.length(); i++) {
+        for (int i = 0; i < precision; i++) {
             int ch = Coordinate.BASE32.indexOf(geoHash.charAt(i));
             for (int bit : BITS) {
                 if (isEven) {
@@ -125,13 +126,14 @@ public class Coordinate {
         return new double[]{(latRange[0] + latRange[1]) / 2.0, (lonRange[0] + lonRange[1]) / 2.0};
     }
 
-    public static List<String> getSurroundGeoHash(String geoHash) {
+    public static HashSet<String> getSurroundGeoHash(String geoHash, Integer precision) {
         int length = geoHash.length();
-        double[] coordinate = decode(geoHash);
-        double[] cell_size = Coordinate.Length2CellSize.get(geoHash.length());
-        List<String> res = new ArrayList<>();
+        double[] coordinate = decode(geoHash, precision);
+        double[] cell_size = (double[]) Coordinate.Length2CellSize.get(geoHash.length());
+        HashSet<String> res = new HashSet<>();
         double lat = coordinate[0];
         double lon = coordinate[1];
+        assert cell_size != null;
         double lat_offset = cell_size[0] * 0.00001141;
         double lon_offset = cell_size[1] * 0.00000899;
 
@@ -164,27 +166,46 @@ class STCoordination extends Coordinate {
     +------------------------+-----------------------------+-----------------------------+
     | high 2bit              | middle 2bit                 | low 4bit                    |
     +------------------------+-----------------------------+-----------------------------+
-    | 00 -> Stagnation point | 01 -> High signal strength  | 0000 -> Network unavailable |
-    | 01 -> Move point       | 00 -> Low signal strength   | 0001 -> Mobile network      |
-    | 11 -> dwell point      |                             | 0011 -> WIFI                |
+    | 01 -> Stagnation point | 01 -> High signal strength  | 0000 -> Network unavailable |
+    | 00 -> Move point       | 00 -> Low signal strength   | 0001 -> Mobile network      |
+    |                        |                             | 0010 -> WIFI                |
     +------------------------+-----------------------------+-----------------------------+
      */
 
-    public static int VALID_CID = 2147483647;
-
-    public static Random rand = new Random();
+    public static int INVALID_CID = 2147483647;
 
     public int Cid; // unique id for coordinate
+
+    public int Tid; // unique id for coordinate
 
     public static HashMap<Integer, STCoordination> CoordinationMap = new HashMap<>();
 
     public int[] SplitPoint = new int[]{};
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyy-MM-dd HH:mm");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyy-MM-dd HH:mm:SS");
 
+    public static boolean existCid(Integer Cid){
+        return STCoordination.CoordinationMap.containsKey(Cid);
+    }
+
+    /*
+    Load from online collector
+     */
     STCoordination(double lon, double lat, String date) throws ParseException {
         super(lon, lat);
         this.date = sdf.parse(date);
+    }
+
+    /*
+    Load from database
+     */
+    STCoordination(String geoHash, byte status, Integer Tid) {
+        super(0, 0);
+        double[] lat_lon = Coordinate.decode(geoHash, geoHash.length());
+        this.lat = lat_lon[0];
+        this.lon = lat_lon[1];
+        this.status = status;
+        this.Tid = Tid;
     }
 
     /**
@@ -193,28 +214,43 @@ class STCoordination extends Coordinate {
     public static boolean judgeBoundary(Date d) {
         Calendar cd = Calendar.getInstance();
         cd.setTime(d);
-        return switch (cd.get(Calendar.MINUTE)) {
-            case 0, 15, 30, 45 -> true;
-            default -> false;
-        };
+        int t = cd.get(Calendar.MINUTE);
+        return t == 0 || t == 15 || t == 30 || t == 45;
     }
 
+    /*
+    get time span between two time points(minutes)
+     */
+//    public static Integer getTimeSpan(Date a, Date b){
+//        Calendar a1 = Calendar.getInstance();
+//        a1.setTime(a);
+//        Calendar b1 = Calendar.getInstance();
+//        a1.setTime(b);
+//        return b1.get(Calendar.MINUTE) - a1.get(Calendar.MINUTE);
+//    }
+//
     public static int putInPool(STCoordination c) {
         if (Objects.equals(c, null)) {
-            return VALID_CID;
+            return INVALID_CID;
         }
-        if (CoordinationMap.containsKey(c.Cid)) {
-            return c.Cid;
-        }
-        int start_num = -2147483648;
-        int end_num = 2147483646;
-        int b = rand.nextInt(end_num - start_num ) + start_num;
-        while (CoordinationMap.containsKey(b)) {
-            b = rand.nextInt(end_num - start_num ) + start_num;
-        }
+        Integer b = ManipulateDataBase.generateUnique("Cid");
         c.Cid = b;
         CoordinationMap.put(b, c);
         return b;
+    }
+
+    public static STCoordination getCoordinateFromCid(Integer C_) {
+
+        /* load from cache */
+        if (STCoordination.CoordinationMap.containsKey(C_)) {
+            return STCoordination.CoordinationMap.get(C_);
+        }
+        /* load from database */
+        else {
+            STCoordination new_ = ManipulateDataBase.DeSerializationSTCoordinationFromCid(C_, null);
+            STCoordination.putInPool(new_);
+            return new_;
+        }
     }
 
     public static Long getTimeSpan(Date a, Date b){
@@ -232,7 +268,13 @@ class Trajectory {
 
     public static final int EARTH_RADIUS = 6371000;
 
-    public static HashMap<Integer, Trajectory> TrajectoryMap = new HashMap<>();
+    public static int VALID_TID = 2147483647;
+
+
+    private static final HashMap<Integer, Trajectory> TrajectoryMap = new HashMap<>();
+
+    public String date;
+
 
     Trajectory(int Tid) {
         this.Tid = Tid;
@@ -246,22 +288,36 @@ class Trajectory {
         }
     }
 
-    public static STCoordination getCoordinateFromCid(Integer C_) throws ParseException {
+    public static Trajectory getTrajectoryFromTid(Integer Tid) {
+        if (TrajectoryMap.containsKey(Tid)) return TrajectoryMap.get(Tid);
+        Trajectory t = ManipulateDataBase.DeSerializationTrajectory(Tid);
+        TrajectoryMap.put(Tid, t);
+        return t;
+    }
 
-        /* load from cache */
-        if (STCoordination.CoordinationMap.containsKey(C_)) {
-            return STCoordination.CoordinationMap.get(C_);
+    public String Trajectory2String(){
+        StringBuilder sp = new StringBuilder();
+        sp.append(this.trajectory.get(0));
+        for (int i = 1; i < this.trajectory.size(); i++) {
+            sp.append(",");
+            sp.append(this.trajectory.get(i));
         }
-        /* load from database */
-        else {
-            return new STCoordination(0.0, 0.0, "1900-1-1 00:00");
-        }
+        return sp.toString();
+    }
+
+    public static Integer putInPool(Trajectory t){
+        if(Objects.equals(t, null)) return VALID_TID;
+        if (TrajectoryMap.containsKey(t.Tid)) return t.Tid;
+        Integer Tid = ManipulateDataBase.generateUnique("Tid");
+        t.Tid = Tid;
+        TrajectoryMap.put(Tid, t);
+        return Tid;
     }
 
     public List<STCoordination> ExpandTrajectory() throws ParseException {
         List<STCoordination> res = new ArrayList<>();
         for (Integer C_ : this.trajectory) {
-            res.add(getCoordinateFromCid(C_));
+            res.add(STCoordination.getCoordinateFromCid(C_));
         }
         return res;
     }
@@ -278,9 +334,7 @@ class Trajectory {
         return this.trajectory.size();
     }
 
-    public static Coordinate getCenterPoint(Integer Cid1, Integer Cid2) throws ParseException {
-        Coordinate c1 = Trajectory.getCoordinateFromCid(Cid1);
-        Coordinate c2 = Trajectory.getCoordinateFromCid(Cid2);
+    public static Coordinate getCenterPoint(Coordinate c1, Coordinate c2){
         Double X = (Math.cos(c1.lat_rad) * Math.cos(c1.lon_rad) + Math.cos(c2.lat_rad) * Math.cos(c2.lon_rad)) / 2.0;
         Double Y = (Math.cos(c1.lat_rad) * Math.sin(c1.lon_rad) + Math.cos(c2.lat_rad) * Math.sin(c2.lon_rad)) / 2.0;
         double Z = (Math.sin(c1.lat_rad) + Math.sin(c2.lat_rad)) / 2.0;
@@ -290,14 +344,11 @@ class Trajectory {
         return new Coordinate(Lon * 180 / Math.PI, Lat * 180 / Math.PI);
     }
 
-    public static Double getDistance(Integer Cid1, Integer Cid2) throws ParseException {
-        Coordinate c1 = Trajectory.getCoordinateFromCid(Cid1);
-        Coordinate c2 = Trajectory.getCoordinateFromCid(Cid2);
-        return Distance(c1, c2);
-    }
 
-    public static Double getDistance(Coordinate c1, Integer Cid2) throws ParseException {
-        Coordinate c2 = Trajectory.getCoordinateFromCid(Cid2);
+
+    public static Double getDistance(Integer Cid1, Integer Cid2) throws ParseException {
+        Coordinate c1 = STCoordination.getCoordinateFromCid(Cid1);
+        Coordinate c2 = STCoordination.getCoordinateFromCid(Cid2);
         return Distance(c1, c2);
     }
 
@@ -332,7 +383,20 @@ class Trajectory {
 
     public STCoordination getCoordinateFromIndex(Integer index) {
         Integer Cid = this.trajectory.get(index);
-        return STCoordination.CoordinationMap.get(Cid);
+        return STCoordination.getCoordinateFromCid(Cid);
+    }
+
+    public static boolean existTid(Integer Tid){
+        return TrajectoryMap.containsKey(Tid);
+    }
+
+    public static Trajectory getAffiliateTrajectory(Integer Cid){
+        STCoordination c = STCoordination.getCoordinateFromCid(Cid);
+        return Trajectory.getTrajectoryFromTid(c.Tid);
+    }
+
+    public static List<Trajectory> getReference(){
+        return  new ArrayList<>(Trajectory.TrajectoryMap.values());
     }
 
 }

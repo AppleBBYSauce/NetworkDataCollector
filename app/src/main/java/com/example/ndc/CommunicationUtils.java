@@ -146,10 +146,18 @@ public class CommunicationUtils {
 
     // terminate server
     void TerminateServer() throws IOException {
-        BroadServer.interrupt();
-        view.GroupServer.interrupt();
-        SendSocket.close();
-        ReceiveSocket.close();
+        if (!Objects.equals(BroadServer, null)){
+            BroadServer.interrupt();
+        }
+        if (!Objects.equals(view.GroupServer, null)){
+            view.GroupServer.interrupt();
+        }
+        if (!Objects.equals(SendSocket, null)){
+            SendSocket.close();
+        }
+        if (!Objects.equals(ReceiveSocket, null)){
+            ReceiveSocket.close();
+        }
         Log.e("CommUtils", "end Server!");
     }
 

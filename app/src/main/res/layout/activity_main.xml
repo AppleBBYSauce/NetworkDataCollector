@@ -33,6 +33,15 @@
         android:id="@+id/forecast"
         >
     </Button>
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="60dp"
+        android:text="ST"
+        android:id="@+id/ST"
+        >
+    </Button>
+
+
     <EditText
         android:layout_width="150dp"
         android:layout_height="50dp"

@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,6 +18,7 @@ import android.widget.EditText;
 
 import com.google.common.geometry.S2LatLng;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -26,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private Button mBtnStartCollect;
     private Button mBtnEndCollect;
     private Button mBtnForecast;
+
+    private Button mBtnST;
     private EditText ETPeriod;
 
     // permission manifest
@@ -40,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
     // apply permission
     private void checkPermission() {
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int phone_status = ContextCompat.checkSelfPermission(this, permission[0]);
             int wifi_status = ContextCompat.checkSelfPermission(this, permission[1]);
@@ -64,7 +69,9 @@ public class MainActivity extends AppCompatActivity {
         mBtnEndCollect = findViewById(R.id.Tc);
         mBtnStartCollect = findViewById(R.id.Sc);
         mBtnForecast = findViewById(R.id.forecast);
+        mBtnST = findViewById(R.id.ST);
         ETPeriod = findViewById(R.id.period);
+
         setListener();
     }
 
@@ -74,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         mBtnStartCollect.setOnClickListener(onclick);
         mBtnEndCollect.setOnClickListener(onclick);
         mBtnForecast.setOnClickListener(onclick);
+        mBtnST.setOnClickListener(onclick);
     }
 
     private class OnClick implements View.OnClickListener {
@@ -95,16 +103,16 @@ public class MainActivity extends AppCompatActivity {
                         startForegroundService(intent);
                     } else {
                         startService(intent);
-
                     }
-
-
                     break;
                 case R.id.forecast:
                     intent = new Intent(MainActivity.this, NetworkForecast.class);
                     Utils.getCommUtils().period =  Integer.valueOf(ETPeriod.getText().toString());
                     startActivity(intent);
                     break;
+                case R.id.ST:
+                    intent = new Intent(MainActivity.this, STForecast.class);
+                    startService(intent);
                 case R.id.Tc:
                     Destroy();
                     break;
@@ -118,10 +126,11 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Intent intent1 = new Intent(MainActivity.this, OfflineCollector.class);
-        Intent intent2 = new Intent(MainActivity.this, OnlineCollector.class);
-        stopService(intent1);
-        stopService(intent2);
+//        Intent intent1 = new Intent(MainActivity.this, OfflineCollector.class);
+//        Intent intent2 = new Intent(MainActivity.this, OnlineCollector.class);
+//        stopService(intent1);
+//        stopService(intent2);
+
     }
 }
 

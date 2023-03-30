@@ -3,21 +3,25 @@ package com.example.ndc;
 import static android.os.SystemClock.sleep;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.os.Build;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -344,6 +348,33 @@ public class View {
         SR = new_SR;
     }
 
+    /*
+    This is test Function!!!
+     */
+    public static void SimulateStatusRecorder() throws IOException, ParseException {
+        ManipulateDataBase.deleteAllTable();
+        AssetManager assetManager = Utils.context.getApplicationContext().getAssets();
+        InputStream inputStream =   assetManager.open("fake_trajectory.txt");
+        InputStreamReader isr = new InputStreamReader(inputStream);
+        BufferedReader bd = new BufferedReader(isr);
+        String line;
+        SpatioTemporalTrajectory.SQUISH squish = new SpatioTemporalTrajectory.SQUISH();
+        while ((line =bd.readLine()) != null){
+                String[] s = line.split(",");
+                double[] GPS = new double[] {Double.parseDouble(s[0]), Double.parseDouble(s[1])};
+                int[] network = new int[] {Integer.parseInt(s[2]), Integer.parseInt(s[3])};
+                squish.run(GPS, network, s[4]); // call the interface
+        }
+
+        List<STCoordination> st = ManipulateDataBase.getAllSTCoordinate();
+        for(STCoordination s:st){
+            HashSet<String> st_hash = STCoordination.getSurroundGeoHash(Coordinate.encode(s.lat,s.lon, 8), 8);
+            for(String s_: st_hash){
+                List<STCoordination> s_co =  ManipulateDataBase.SearchSurroundFromGeoHash(s_, 8);
+                int a = 0;
+            }
+        }
+    }
 
     public HashMap<String, Queue<ArrayList<Float>>> getOnlineData() {
         return OnlineBuffer;

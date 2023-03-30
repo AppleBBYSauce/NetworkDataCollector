@@ -22,7 +22,7 @@ public class Monitor extends AppCompatActivity {
                 View.Device_Manifests + "\n" +
                 View.Activity_Device + "\n" +
                 View.LocalIP + "\n" +
-                Utils.getCommUtils().Location
+                Utils.getCommUtils().Location + "\n"
         );
     }
 }
